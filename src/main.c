@@ -1,10 +1,11 @@
+#define STB_IMAGE_IMPLEMENTATION
 #include "glad/include/glad/glad.h"
+#include "include/stb_image.h"
 #include "include/utils.h"
 #include <GLFW/glfw3.h>
-
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 typedef float vec3[3];
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -101,11 +102,24 @@ int main() {
   int timeLocation = glGetUniformLocation(shaderProgram, "u_time");
   // set up vertex data (and buffer(s)) and configure vertex attributes
   // ------------------------------------------------------------------
-  float vertices[] = {-1.0f, -1.0f, 3.0f, -1.0f, -1.0f, 3.0f};
+  // float vertices[] = {-1.0f, -1.0f, 3.0f, -1.0f, -1.0f, 3.0f};
   // float vertices[] = {0.5f, -0.5f, 0.0f, 0.5f, -0.5f, -0.5f};
-  unsigned int VBO, VAO;
+  float vertices[] = {
+      // positions                      // colors                texture coords
+      0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top right
+      0.5f,  -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bottom right
+      -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
+      -0.5f, 0.5f,  0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f  // top left
+  };
+  unsigned int indices[] = {
+      0, 1, 3, // first triangle
+      1, 2, 3  // second triangle
+  };
+  unsigned int VBO, VAO, EBO;
   glGenVertexArrays(1, &VAO);
   glGenBuffers(1, &VBO);
+  glGenBuffers(1, &EBO);
+
   // bind the Vertex Array Object first, then bind and set vertex buffer(s), and
   // then configure vertex attributes(s).
   glBindVertexArray(VAO);
@@ -113,9 +127,40 @@ int main() {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+               GL_STATIC_DRAW);
 
+  // position attribute
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0);
+  // color attribute
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+                        (void *)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1);
+  // texture coord attribute
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+                        (void *)(6 * sizeof(float)));
+  glEnableVertexAttribArray(2);
+
+  // load texture
+  int width, height, nrChannels;
+  unsigned char *data =
+      stbi_load("./src/assets/wall.jpg", &width, &height, &nrChannels, 0);
+  if (data == NULL) {
+    printf("failed to load wall.jpg");
+    exit(EXIT_FAILURE);
+  }
+  // gen texture object
+  unsigned int texture;
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+               GL_UNSIGNED_BYTE, data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  stbi_image_free(data);
   // note that this is allowed, the call to glVertexAttribPointer registered VBO
   // as the vertex attribute's bound vertex buffer object so afterwards we can
   // safely unbind
@@ -128,40 +173,14 @@ int main() {
   glBindVertexArray(0);
   // uncomment this call to draw in wireframe polygons.
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  vec3 zoom = {0.0, 0.0, 1.0};
-  int zoomLocation = glGetUniformLocation(shaderProgram, "u_zoom");
+
   // render loop
   // -----------
   while (!glfwWindowShouldClose(window)) {
     // input
     // -----
     processInput(window);
-    float def_speed = 0.1;
-    float moveSpeed = def_speed / zoom[2];
-    // moveSpeed = fabs(moveSpeed);
-    if (glfwGetKey(window, GLFW_KEY_UP)) {
-      zoom[1] += moveSpeed;
-    }
-    if (glfwGetKey(window, GLFW_KEY_DOWN)) {
-      zoom[1] -= moveSpeed;
-    }
-    if (glfwGetKey(window, GLFW_KEY_LEFT)) {
-      zoom[0] -= moveSpeed;
-    }
-    if (glfwGetKey(window, GLFW_KEY_RIGHT)) {
-      zoom[0] += moveSpeed;
-    }
-    const float ZOOM_LIMIT = 1.0;
-    if (glfwGetKey(window, GLFW_KEY_0)) {
-      if (zoom[2] <= ZOOM_LIMIT) {
-        zoom[2] = ZOOM_LIMIT + 0.001;
-        continue;
-      }
-      zoom[2] -= 0.1 * zoom[2] + 0.1;
-    }
-    if (glfwGetKey(window, GLFW_KEY_1)) {
-      zoom[2] += 0.1 * zoom[2] + 0.1;
-    }
+
     // render
     // ------
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -171,12 +190,16 @@ int main() {
 
     glUseProgram(shaderProgram);
     glUniform1f(timeLocation, timeValue);
-    glUniform3fv(zoomLocation, 1, zoom);
 
-    glBindVertexArray(
-        VAO); // seeing as we only have a single VAO there's no need to bind it
-              // every time, but we'll do so to keep things a bit more organized
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    // activate the texture unit first before binding texture
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindVertexArray(VAO);
+    // seeing as we only have a single VAO there's no need to bind it
+    // every time, but we'll do so to keep things a bit more organized
+    //     glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     // glBindVertexArray(0); // no need to unbind it every time
 
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved
@@ -188,6 +211,7 @@ int main() {
 
   // optional: de-allocate all resources once they've outlived their purpose:
   // ------------------------------------------------------------------------
+  glDeleteBuffers(1, &EBO);
   glDeleteVertexArrays(1, &VAO);
   glDeleteBuffers(1, &VBO);
   glDeleteProgram(shaderProgram);
