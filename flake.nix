@@ -30,6 +30,7 @@
               glfw
               gdb
               glib
+              cglm # math functions for opengl in c
             ];
           }
         );
