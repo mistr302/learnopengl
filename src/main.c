@@ -1,3 +1,4 @@
+#include "cglm/mat4.h"
 #define CGLM_SHARED
 #define STB_IMAGE_IMPLEMENTATION
 #include "glad/include/glad/glad.h"
@@ -139,8 +140,9 @@ int main() {
 
     mat4 mat = GLM_MAT4_IDENTITY_INIT;
 
-    glm_translate(mat, (vec3){sin(timeValue), sin(timeValue), 0});
+    glm_translate(mat, (vec3){-sin(timeValue), sin(timeValue), 0});
     glm_rotate(mat, timeValue, (vec3){0, 0, 1.0f});
+
     // float scale = sin(timeValue);
     // glm_scale(mat, (vec3){scale, scale, 1.});
     glUniformMatrix4fv(transformLocation, 1, GL_FALSE, (float *)mat);
@@ -156,6 +158,13 @@ int main() {
     // every time, but we'll do so to keep things a bit more organized
     //     glDrawArrays(GL_TRIANGLES, 0, 3);
 
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    glm_mat4_identity(mat);
+    glm_translate(mat, (vec3){sin(timeValue), sin(timeValue), 0});
+    glm_rotate(mat, timeValue, (vec3){0, 0, 1.0f});
+
+    glUniformMatrix4fv(transformLocation, 1, GL_FALSE, (float *)mat);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     // glBindVertexArray(0); // no need to unbind it every time
 
