@@ -1,11 +1,13 @@
-#include <stdlib.h>
+#define CGLM_SHARED
 #define STB_IMAGE_IMPLEMENTATION
 #include "glad/include/glad/glad.h"
 #include "include/gl_utils.h"
 #include "include/stb_image.h"
 #include <GLFW/glfw3.h>
 #include <cglm/cglm.h>
+#include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -134,6 +136,14 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     float timeValue = glfwGetTime();
+
+    mat4 mat = GLM_MAT4_IDENTITY_INIT;
+
+    glm_translate(mat, (vec3){sin(timeValue), sin(timeValue), 0});
+    glm_rotate(mat, timeValue, (vec3){0, 0, 1.0f});
+    // float scale = sin(timeValue);
+    // glm_scale(mat, (vec3){scale, scale, 1.});
+    glUniformMatrix4fv(transformLocation, 1, GL_FALSE, (float *)mat);
 
     glUseProgram(shaderProgram);
     glUniform1f(timeLocation, timeValue);

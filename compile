@@ -1,1 +1,1 @@
-gcc src/main.c src/utils.c src/glad/src/glad.c src/gl_utils.c -I src/glad/include -lglfw -g -lm
+gcc src/main.c src/utils.c src/glad/src/glad.c src/gl_utils.c -I src/glad/include -lglfw -lcglm -lm -g
