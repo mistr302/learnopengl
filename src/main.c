@@ -34,6 +34,7 @@ int main() {
   GLFWwindow *window =
       glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Mandelbrot", NULL, NULL);
   if (window == NULL) {
+    printf("Couldnt create glfw window");
     glfwTerminate();
     return -1;
   }
@@ -43,6 +44,7 @@ int main() {
   // glad: load all OpenGL function pointers
   // ---------------------------------------
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    printf("Failed to load gl functions");
     return -1;
   }
 
