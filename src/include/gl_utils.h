@@ -1,8 +1,21 @@
+#pragma once
 #include "../glad/include/glad/glad.h"
 #include <GLFW/glfw3.h>
+#include <cglm/cglm.h>
+
 struct Shader {
   unsigned int vertex;
   unsigned int fragment;
+};
+struct Transform {
+  vec3 position;
+  float rotation;
+};
+struct GameObject {
+  struct Transform t;
+  unsigned int VAO;
+  unsigned int vertex_count;
+  unsigned int texture;
 };
 
 int load_shaders(const char *vertex_shader_path,
@@ -22,3 +35,7 @@ void processInput(GLFWwindow *window);
 // function executes
 // ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+int get_time_loc();
+void set_time_loc(int timeLoc);
+int get_transform_loc();
+void set_transform_loc(int transformLoc);

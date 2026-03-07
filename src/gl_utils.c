@@ -4,6 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int timeLocation = -1;
+int transformLocation = -1;
+
+int get_time_loc() { return timeLocation; }
+void set_time_loc(int timeLoc) { timeLocation = timeLoc; }
+int get_transform_loc() { return transformLocation; }
+void set_transform_loc(int transformLoc) { transformLocation = transformLoc; }
+
 int load_shaders(const char *vertex_shader_path,
                  const char *fragment_shader_path, struct Shader *out) {
   if (out == NULL) {
@@ -77,7 +85,7 @@ int load_texture(const char *tex_path) {
   int width, height, nrChannels;
   unsigned char *data = stbi_load(tex_path, &width, &height, &nrChannels, 0);
   if (data == NULL) {
-    printf("failed to load wall.jpg");
+    printf("failed to load texture %s", tex_path);
     return -1;
   }
   // gen texture object
